@@ -11,6 +11,40 @@ from scipy.signal import butter, lfilter, freqz
 
 import os
 
+def finalMovement(movement, threshold, moveValue):
+    started = False
+    count = 0
+    finalMovement = []
+    for i in range(len(movement)):
+        if((movement[i]!=moveValue and not started) or (movement[i]==moveValue and started)):
+            finalMovement.append(movement[i])
+        elif(movement[i]==moveValue and not started):
+            started = True
+            finalMovement.append(movement[i])
+        elif(movement[i]!=moveValue and started):
+            if(count == threshold):
+                for j in range(count+1):
+                    finalMovement.append(np.nan)
+                count = 0
+                print("I'm in the third elif")
+                print(len(finalMovement))
+                print(i)
+                started=False
+            else:
+                count+=1
+        elif(movement[i]==moveValue and started):
+            for j in range(count+1):
+                finalMovement.append(moveValue)
+            count = 0
+            started = False
+            print("I'm in the fourth elif---------------------")
+            print(len(finalMovement))
+            print(i)
+    print("All done")
+    print(len(finalMovement))
+    print(len(movement))
+    return finalMovement
+
 def combineMovement(accMov, gyroMov, moveValue):
     print(len(accMov))
     print(len(gyroMov))
@@ -134,26 +168,56 @@ gyroUpperThreshold = 8000
 #accMovement = [10000 if accRMS[i] >= accLowerThreshold and accRMS[i] <= accUpperThreshold else np.nan for i in range(len(accRMS))]
 #gyroMovement = [10000 if gyroRMS[i] >= gyroLowerThreshold and gyroRMS[i] <= gyroUpperThreshold else np.nan for i in range(len(gyroRMS))]
 
+#Movement 
 accMovement = [1 if accRMS[i] >= accLowerThreshold else np.nan for i in range(len(accRMS))]
 gyroMovement = [1 if gyroRMS[i] >= gyroLowerThreshold else np.nan for i in range(len(gyroRMS))]
 
+#Movement with gaps of < 10 accounted for
+accMovementFinal = finalMovement(accMovement, 10, 1)
+gyroMovementFinal = finalMovement(gyroMovement, 10, 1)
+
+#Isolation of the movement intervals (with gaps)
 accMov = movement(accMovement, 1)
 gyroMov = movement(gyroMovement, 1)
 
+#Isolation of the movement intervals (without gaps)
+accMovFinal = movement(accMovementFinal, 1)
+gyroMovFinal = movement(gyroMovementFinal, 1)
+
+#Isolation of the intermovement intervals (with gaps)
 accInterMov = noMovement(accMovement, 1)
 gyroInterMov = noMovement(gyroMovement, 1)
 
+#Isolation of the intermovement intervals (without gaps)
+accInterMovFinal = noMovement(accMovementFinal, 1)
+gyroInterMovFinal = noMovement(gyroMovementFinal, 1)
+
+#Combined movement (with gaps)
 movList = combineMovement(accMovement, gyroMovement, 1)
 mov = movement(movList, 1)
 movInter = noMovement(movList, 1)
 
+#Combined movement (without gaps)
+movListFinal = combineMovement(accMovementFinal, gyroMovementFinal, 1)
+movFinal = movement(movListFinal, 1)
+movInterFinal = noMovement(movListFinal, 1)
+
+print("\n------------------------With gaps------------------------\n")
+print("Intermovement: ")
 print(movInter[2][0:10])
+print("Movement: ")
 print(mov[2][0:10])
+
+print("\n------------------------Without gaps------------------------\n")
+print("Intermovement: ")
+print(movInterFinal[2][0:10])
+print("Movement:")
+print(movFinal[2][0:10])
 
 plt.subplot(3,1,1)
 plt.tight_layout(h_pad=1)
 line1, = plt.plot(time, accRMS,label='Accelerometer')
-line2, = plt.plot(time, accMovement,label='Movement')
+line2, = plt.plot(time, accMovementFinal,label='Movement Final')
 plt.ylabel('Acceleration (*insert units*)')
 plt.title('Accelerometer data over time')
 plt.xlabel('Time (ms)')
@@ -162,7 +226,7 @@ plt.grid(True)
 
 plt.subplot(3,1,2)
 line3, = plt.plot(time, gyroRMS,label='Gyroscope')
-line4, = plt.plot(time, gyroMovement,label='Movement')
+line4, = plt.plot(time, gyroMovementFinal,label='Movement Final')
 plt.ylabel('Gyroscope (*insert units*)')
 plt.xlabel('Time (ms)')
 plt.title('Gyroscope data over time')
@@ -170,7 +234,8 @@ plt.legend(loc='best')
 plt.grid(True)
 
 plt.subplot(3,1,3)
-line5, = plt.plot(time, movList, label='Movement')
+line5, = plt.plot(time, movListFinal, linewidth=3, label='Movement Final')
+line6, = plt.plot(time, movList, label = 'Movement (not Final)')
 plt.ylabel('Movement')
 plt.xlabel('Time (ms)')
 plt.title('Movement over time')

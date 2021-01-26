@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy
 import math
 import matplotlib.pyplot as plt
 import scipy
@@ -10,6 +9,37 @@ import numpy as np
 from scipy.signal import butter, lfilter, freqz
 
 import os
+
+def noMovOrientation(acc, interMovement):
+    accx = acc[0]
+    accy = acc[1]
+    accz = acc[2]
+    yaw = []
+    pitch = []
+    roll = []
+    orientation = []
+    orientationAvg = []
+    for i in range(len(interMovement)):
+        yaw.append([])
+        pitch.append([])
+        roll.append([])
+        orientation.append([])
+    
+    for i in range(len(interMovement)):
+        for j in range(interMovement[i][0], interMovement[i][1]+1):
+            roll[i].append(math.atan2(accy[j],accz[j]) * 180/math.pi)
+            pitch[i].append(math.atan2(accx[j], math.sqrt(accy[j]**2+accz[j]**2) * 180/math.pi))
+            #yaw[i].append()
+            #Roll = atan2(Y, Z) * 180/PI;
+            #Pitch = atan2(X, sqrt(Y*Y + Z*Z)) * 180/PI;
+            #From https://samselectronicsprojects.blogspot.com/2014/07/getting-roll-pitch-and-yaw-from-mpu-6050.html 
+    for i in range(len(roll)):
+        for j in range(len(roll[i])):
+            #orientation[i].append((roll[i][j]+pitch[i][j]+yaw[i][j])/3) For when yaw is implemented
+            orientation[i].append((roll[i][j]+pitch[i][j])/2)
+    for i in range(len(orientation)):
+        orientationAvg.append(sum(orientation[i])/len(orientation[i]))
+    return [[yaw, pitch, roll], orientation, orientationAvg]
 
 def finalMovement(movement, threshold, moveValue):
     started = False
@@ -26,9 +56,9 @@ def finalMovement(movement, threshold, moveValue):
                 for j in range(count+1):
                     finalMovement.append(np.nan)
                 count = 0
-                print("I'm in the third elif")
-                print(len(finalMovement))
-                print(i)
+                #print("I'm in the third elif")
+                #print(len(finalMovement))
+                #print(i)
                 started=False
             else:
                 count+=1
@@ -37,12 +67,12 @@ def finalMovement(movement, threshold, moveValue):
                 finalMovement.append(moveValue)
             count = 0
             started = False
-            print("I'm in the fourth elif---------------------")
-            print(len(finalMovement))
-            print(i)
-    print("All done")
-    print(len(finalMovement))
-    print(len(movement))
+            #print("I'm in the fourth elif---------------------")
+            #print(len(finalMovement))
+            #print(i)
+    #print("All done")
+    #print(len(finalMovement))
+    #print(len(movement))
     return finalMovement
 
 def combineMovement(accMov, gyroMov, moveValue):
@@ -213,6 +243,21 @@ print("Intermovement: ")
 print(movInterFinal[2][0:10])
 print("Movement:")
 print(movFinal[2][0:10])
+
+orientation = noMovOrientation([accx2, accy2, accz2], movInterFinal[2])
+print("\n------------------------Orientation------------------------\n")
+print("The following are for the first 10 orientations for the first intermovement interval")
+print("Yaw:")
+print(orientation[0][0][0][:10])
+print("Pitch:")
+print(orientation[0][1][0][:10])
+print("Roll:")
+print(orientation[0][2][0][:10])
+
+print("\nOrientation:")
+print(orientation[1][0][:10])
+print("\nThe following is the first 10 average orientations")
+print(orientation[2][:10])
 
 plt.subplot(3,1,1)
 plt.tight_layout(h_pad=1)

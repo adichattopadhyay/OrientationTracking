@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy
 import math
 import matplotlib.pyplot as plt
 import scipy

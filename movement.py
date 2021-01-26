@@ -279,7 +279,7 @@ plt.legend(loc='best')
 plt.grid(True)
 
 plt.subplot(3,1,3)
-line5, = plt.plot(time, movListFinal, linewidth=3, label='Movement Final')
+line5, = plt.plot(time, movListFinal, label='Movement Final')
 line6, = plt.plot(time, movList, label = 'Movement (not Final)')
 plt.ylabel('Movement')
 plt.xlabel('Time (ms)')

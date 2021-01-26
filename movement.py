@@ -259,6 +259,36 @@ print(orientation[1][0][:10])
 print("\nThe following is the first 10 average orientations")
 print(orientation[2][:10])
 
+pitch = []
+roll = []
+for i in range(len(orientation[0][1])):
+    for j in range(len(orientation[0][1][i])):
+        roll.append(orientation[0][2][i])
+        pitch.append(orientation[0][1][i])
+
+#Graph the roll and pitch intermovement interval
+#If they look consistent then there is no preprocessing step needed
+#Across the five nights
+#Forget about yaw for now
+
+plt.subplot(2,1,1)
+line1, = plt.plot(time, pitch ,label='pitch')
+plt.ylabel('Acceleration (*insert units*)')
+plt.title('Pitch')
+plt.xlabel('Time (ms)')
+plt.legend(loc='best')
+plt.grid(True)
+
+plt.subplot(2,1,2)
+line1, = plt.plot(time, roll ,label='roll')
+plt.ylabel('Acceleration (*insert units*)')
+plt.title('Roll')
+plt.xlabel('Time (ms)')
+plt.legend(loc='best')
+plt.grid(True)
+
+plt.show()
+"""
 plt.subplot(3,1,1)
 plt.tight_layout(h_pad=1)
 line1, = plt.plot(time, accRMS,label='Accelerometer')
@@ -288,7 +318,7 @@ plt.legend(loc='best')
 plt.grid(True)
 
 plt.show()
-
+"""
 """
 Put the code on github (Nilanjan's github: nilanbumbc)
 1. APPLY THE THRESHOLD VALUE OF 10 TO COMBINE MOVEMENTS

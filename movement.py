@@ -19,6 +19,7 @@ def noMovOrientation(acc, interMovement):
     roll = []
     orientation = []
     orientationAvg = []
+    time = []
     for i in range(len(interMovement)):
         yaw.append([])
         pitch.append([])
@@ -27,6 +28,7 @@ def noMovOrientation(acc, interMovement):
     
     for i in range(len(interMovement)):
         for j in range(interMovement[i][0], interMovement[i][1]+1):
+            time.append(j*40)
             roll[i].append(math.atan2(accy[j],accz[j]) * 180/math.pi)
             pitch[i].append(math.atan2(accx[j], math.sqrt(accy[j]**2+accz[j]**2) * 180/math.pi))
             #yaw[i].append()
@@ -39,7 +41,7 @@ def noMovOrientation(acc, interMovement):
             orientation[i].append((roll[i][j]+pitch[i][j])/2)
     for i in range(len(orientation)):
         orientationAvg.append(sum(orientation[i])/len(orientation[i]))
-    return [[yaw, pitch, roll], orientation, orientationAvg]
+    return [[yaw, pitch, roll], orientation, orientationAvg, time]
 
 def finalMovement(movement, threshold, moveValue):
     started = False
@@ -232,6 +234,17 @@ movListFinal = combineMovement(accMovementFinal, gyroMovementFinal, 1)
 movFinal = movement(movListFinal, 1)
 movInterFinal = noMovement(movListFinal, 1)
 
+#Calculate Orientation [[yaw, pitch, roll], orientation, orientationAvg, time]
+orientation = noMovOrientation([accx2, accy2, accz2], movInterFinal[2])
+
+#Extract from orientation
+yaw = orientation[0][0]
+pitch = orientation[0][1]
+roll = orientation[0][2]
+interMovOrientation = orientation[1]
+interMovOrientationAvg = orientation[2]
+interMovTime = orientation[3]
+
 print("\n------------------------With gaps------------------------\n")
 print("Intermovement: ")
 print(movInter[2][0:10])
@@ -244,20 +257,23 @@ print(movInterFinal[2][0:10])
 print("Movement:")
 print(movFinal[2][0:10])
 
-orientation = noMovOrientation([accx2, accy2, accz2], movInterFinal[2])
 print("\n------------------------Orientation------------------------\n")
 print("The following are for the first 10 orientations for the first intermovement interval")
 print("Yaw:")
-print(orientation[0][0][0][:10])
+print(yaw[0][:10])
 print("Pitch:")
-print(orientation[0][1][0][:10])
+print(pitch[0][:10])
 print("Roll:")
-print(orientation[0][2][0][:10])
+print(roll[:10])
 
 print("\nOrientation:")
-print(orientation[1][0][:10])
+print(interMovOrientation[0][:10])
 print("\nThe following is the first 10 average orientations")
-print(orientation[2][:10])
+print(interMovOrientationAvg[:10])
+
+print("\n------------------------Time------------------------\n")
+print("\Time:")
+print(interMovTime[0:20])
 
 pitch = []
 roll = []
@@ -292,7 +308,7 @@ plt.show()
 plt.subplot(3,1,1)
 plt.tight_layout(h_pad=1)
 line1, = plt.plot(time, accRMS,label='Accelerometer')
-line2, = plt.plot(time, accMovementFinal,label='Movement Final')
+line2, = plt.plot(time, accMovem    entFinal,label='Movement Final')
 plt.ylabel('Acceleration (*insert units*)')
 plt.title('Accelerometer data over time')
 plt.xlabel('Time (ms)')

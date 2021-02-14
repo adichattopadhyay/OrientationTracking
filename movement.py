@@ -10,6 +10,13 @@ from scipy.signal import butter, lfilter, freqz
 
 import os
 
+def expandList(arr):
+    arrExpand = []
+    for i in range(len(arr)):
+        for j in arr[i]:
+            arrExpand.append(j)
+    return arrExpand
+
 def noMovOrientation(acc, interMovement):
     accx = acc[0]
     accy = acc[1]
@@ -17,20 +24,27 @@ def noMovOrientation(acc, interMovement):
     yaw = []
     pitch = []
     roll = []
+    yawExpand = []
+    pitchExpand = []
+    rollExpand = []
     orientation = []
     orientationAvg = []
-    time = []
+    time2 = []
     for i in range(len(interMovement)):
         yaw.append([])
         pitch.append([])
         roll.append([])
         orientation.append([])
-    
+    print(len(interMovement))
     for i in range(len(interMovement)):
         for j in range(interMovement[i][0], interMovement[i][1]+1):
-            time.append(j*40)
-            roll[i].append(math.atan2(accy[j],accz[j]) * 180/math.pi)
-            pitch[i].append(math.atan2(accx[j], math.sqrt(accy[j]**2+accz[j]**2) * 180/math.pi))
+            time2.append(time[j])
+            rollVal = (math.atan2(accy[j],accz[j]) * 180/math.pi)
+            pitchVal = math.atan2(accx[j], math.sqrt(accy[j]**2+accz[j]**2) * 180/math.pi)
+            roll[i].append(rollVal)
+            pitch[i].append(pitchVal)
+            #rollExpand.append(rollVal)
+            #pitchExpand.append(pitchVal)
             #yaw[i].append()
             #Roll = atan2(Y, Z) * 180/PI;
             #Pitch = atan2(X, sqrt(Y*Y + Z*Z)) * 180/PI;
@@ -41,7 +55,7 @@ def noMovOrientation(acc, interMovement):
             orientation[i].append((roll[i][j]+pitch[i][j])/2)
     for i in range(len(orientation)):
         orientationAvg.append(sum(orientation[i])/len(orientation[i]))
-    return [[yaw, pitch, roll], orientation, orientationAvg, time]
+    return [[yaw, pitch, roll], orientation, orientationAvg, time2]
 
 def finalMovement(movement, threshold, moveValue):
     started = False
@@ -78,8 +92,8 @@ def finalMovement(movement, threshold, moveValue):
     return finalMovement
 
 def combineMovement(accMov, gyroMov, moveValue):
-    print(len(accMov))
-    print(len(gyroMov))
+    #print(len(accMov))
+    #print(len(gyroMov))
     movList = []
     for i in range(len(accMov)):
         if(accMov[i] == moveValue or gyroMov[i] == moveValue):
@@ -264,7 +278,7 @@ print(yaw[0][:10])
 print("Pitch:")
 print(pitch[0][:10])
 print("Roll:")
-print(roll[:10])
+print(roll[0][:10])
 
 print("\nOrientation:")
 print(interMovOrientation[0][:10])
@@ -272,32 +286,56 @@ print("\nThe following is the first 10 average orientations")
 print(interMovOrientationAvg[:10])
 
 print("\n------------------------Time------------------------\n")
-print("\Time:")
+print("Time:")
 print(interMovTime[0:20])
-
-pitch = []
-roll = []
-for i in range(len(orientation[0][1])):
-    for j in range(len(orientation[0][1][i])):
-        roll.append(orientation[0][2][i])
-        pitch.append(orientation[0][1][i])
+print(interMovTime[72:92])
 
 #Graph the roll and pitch intermovement interval
 #If they look consistent then there is no preprocessing step needed
 #Across the five nights
 #Forget about yaw for now
 
+#print(len(pitch))
+#print(pitch[1540:1570])            
+
+#Expands the roll, pitch, and yaw lists
+#yawExpand = expandList(yaw)
+pitchExpand = expandList(pitch)
+rollExpand = expandList(roll)
+pitchFinal = []
+rollFinal = []
+cntr = 0
+
+print(len(time))
+print(len(interMovTime))
+
+wait=False
+
+for i in range(len(time)):
+    if(i>len(interMovTime)-1):
+        pitchFinal.append(np.nan)
+        rollFinal.append(np.nan)
+    elif(time[i]==interMovTime[i-cntr]):
+        pitchFinal.append(pitchExpand[i-cntr])
+        rollFinal.append(rollExpand[i-cntr])
+    elif(time[i]!=interMovTime[i-cntr]):
+        pitchFinal.append(np.nan)
+        rollFinal.append(np.nan)
+        cntr+=1
+
+print(len(pitchFinal))
+
 plt.subplot(2,1,1)
-line1, = plt.plot(time, pitch ,label='pitch')
-plt.ylabel('Acceleration (*insert units*)')
+line1, = plt.plot(time, pitchFinal, label='pitch')
+plt.ylabel('Pitch (*insert units*)')
 plt.title('Pitch')
 plt.xlabel('Time (ms)')
 plt.legend(loc='best')
 plt.grid(True)
 
 plt.subplot(2,1,2)
-line1, = plt.plot(time, roll ,label='roll')
-plt.ylabel('Acceleration (*insert units*)')
+line1, = plt.plot(time, rollFinal, label='roll')
+plt.ylabel('Roll (*insert units*)')
 plt.title('Roll')
 plt.xlabel('Time (ms)')
 plt.legend(loc='best')
@@ -308,7 +346,7 @@ plt.show()
 plt.subplot(3,1,1)
 plt.tight_layout(h_pad=1)
 line1, = plt.plot(time, accRMS,label='Accelerometer')
-line2, = plt.plot(time, accMovem    entFinal,label='Movement Final')
+line2, = plt.plot(time, accMovementFinal,label='Movement Final')
 plt.ylabel('Acceleration (*insert units*)')
 plt.title('Accelerometer data over time')
 plt.xlabel('Time (ms)')

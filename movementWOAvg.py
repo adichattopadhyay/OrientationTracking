@@ -340,8 +340,6 @@ print(interMovTime[72:92])
 
 pitchExpand = expandList(pitch)
 rollExpand = expandList(roll)
-pitchAvg = windowAvg(100, 1/10, pitchExpand)
-rollAvg = windowAvg(100, 1/10, rollExpand)
 pitchFinal = []
 rollFinal = []
 cntr = 0
@@ -356,8 +354,8 @@ for i in range(len(time)):
         pitchFinal.append(np.nan)
         rollFinal.append(np.nan)
     elif(time[i]==interMovTime[i-cntr]):
-        pitchFinal.append(pitchAvg[i-cntr])
-        rollFinal.append(rollAvg[i-cntr])
+        pitchFinal.append(pitchExpand[i-cntr])
+        rollFinal.append(rollExpand[i-cntr])
     elif(time[i]!=interMovTime[i-cntr]):
         pitchFinal.append(np.nan)
         rollFinal.append(np.nan)

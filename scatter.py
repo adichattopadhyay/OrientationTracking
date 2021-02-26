@@ -1,5 +1,6 @@
 import pandas as pd
 import math
+import matplotlib
 import matplotlib.pyplot as plt
 import scipy
 import sys  
@@ -20,7 +21,52 @@ def divideChunk(chunkSize, overlap, data):
             indexList.append([i,i+chunkSize-1])
     print("\nFirst 10 for index list:", indexList[0:10])
     return indexList
-        
+
+def nightAvg(windowSize, overlap, data, movement):
+    count = 0
+    movCount = 0
+    noMovCount = 0
+    indexList = divideChunk(windowSize, overlap, data[0])
+    pitch = data[0]
+    roll = data[1]
+    moveList = movement
+    avgPitch = []
+    avgRoll = []
+    movementList = []
+    for i in range(len(pitch)):        
+        if(indexList[count][0]==i):
+            avgP = sum(pitch[indexList[count][0]:indexList[count][1]])/windowSize 
+            avgR = sum(roll[indexList[count][0]:indexList[count][1]])/windowSize   
+            avgPitch.append(avgP)
+            avgRoll.append(avgR)             
+        elif(indexList[count][1]==i):
+            if(movCount >= noMovCount):
+                movementList.append(True)
+            elif(movCount < noMovCount):   
+                movementList.append(False)
+            movCount = 0
+            noMovCount = 0
+            count+=1            
+        if(moveList[i]!=1):
+            noMovCount+=1
+        elif(moveList[i]==1):
+            movCount+=1
+    return [avgPitch, avgRoll, movementList]
+    
+def orient(acc):
+    accx = acc[0]
+    accy = acc[1]
+    accz = acc[2]
+    pitch = []
+    roll = []
+    orientation = []
+    for i in range(len(accx)):
+        rollVal = (math.atan2(accy[i],accz[i]) * 180/math.pi)
+        pitchVal = math.atan2(accx[i], math.sqrt(accy[i]**2+accz[i]**2)) * 180/math.pi
+        roll.append(rollVal)
+        pitch.append(pitchVal)
+        orientation.append((roll[i]+pitch[i])/2)
+    return [pitch, roll, orientation]
 
 def windowAvg(windowSize, overlap, data):
     count = 0
@@ -59,9 +105,6 @@ def noMovOrientation(acc, interMovement):
     yaw = []
     pitch = []
     roll = []
-    yawExpand = []
-    pitchExpand = []
-    rollExpand = []
     orientation = []
     orientationAvg = []
     time2 = []
@@ -78,8 +121,6 @@ def noMovOrientation(acc, interMovement):
             pitchVal = math.atan2(accx[j], math.sqrt(accy[j]**2+accz[j]**2)) * 180/math.pi
             roll[i].append(rollVal)
             pitch[i].append(pitchVal)
-            #rollExpand.append(rollVal)
-            #pitchExpand.append(pitchVal)
             #yaw[i].append()
             #Roll = atan2(Y, Z) * 180/PI;
             #Pitch = atan2(X, sqrt(Y*Y + Z*Z)) * 180/PI;
@@ -346,8 +387,6 @@ pitchFinal = []
 rollFinal = []
 cntr = 0
 
-print(len(time))
-print(len(interMovTime))
 
 wait=False
 
@@ -363,10 +402,34 @@ for i in range(len(time)):
         rollFinal.append(np.nan)
         cntr+=1
 
-print(len(pitchFinal))
+orientation2 = orient([accx2, accy2, accz2])
+s = int(input("How many seconds do you want the window to be: "))
+nightAverage = nightAvg(s*45, 1, orientation2, movListFinal)
 
-print(movListFinal[60:80])
+print("\n------------------------Night Average------------------------\n")
+print("Average Pitch: ")
+print(nightAverage[0][0:10])
+print("Average Roll: ")
+print(nightAverage[1][0:10])
+print("Is Moving: ")
+print(nightAverage[2][0:10])
 
+print("len of pitch", len(nightAverage[0]))
+print("len of roll", len(nightAverage[1]))
+print("len of moving", len(nightAverage[2]))
+
+
+colors = ['red', 'green']
+fig = plt.figure(figsize=(8,8))
+plt.scatter(nightAverage[0], nightAverage[1], c=nightAverage[2], cmap=matplotlib.colors.ListedColormap(colors))
+plt.title('Pitch vs Roll (' + str(s) + " seconds)")
+plt.xlabel("Pitch")
+plt.ylabel("Roll")
+plt.grid(True)
+
+plt.show()
+
+"""
 plt.subplot(2,1,1)
 line1, = plt.plot(time, pitchFinal, label='pitch')
 line2, = plt.plot(time, movListFinal, label='Movement Final')
@@ -387,72 +450,18 @@ plt.grid(True)
 
 plt.show()
 """
-plt.subplot(3,1,1)
-plt.tight_layout(h_pad=1)
-line1, = plt.plot(time, accRMS,label='Accelerometer')
-line2, = plt.plot(time, accMovementFinal,label='Movement Final')
-plt.ylabel('Acceleration (*insert units*)')
-plt.title('Accelerometer data over time')
-plt.xlabel('Time (ms)')
-plt.legend(loc='best')
-plt.grid(True)
-
-plt.subplot(3,1,2)
-line3, = plt.plot(time, gyroRMS,label='Gyroscope')
-line4, = plt.plot(time, gyroMovementFinal,label='Movement Final')
-plt.ylabel('Gyroscope (*insert units*)')
-plt.xlabel('Time (ms)')
-plt.title('Gyroscope data over time')
-plt.legend(loc='best')
-plt.grid(True)
-
-plt.subplot(3,1,3)
-line5, = plt.plot(time, movListFinal, label='Movement Final')
-line6, = plt.plot(time, movList, label = 'Movement (not Final)')
-plt.ylabel('Movement')
-plt.xlabel('Time (ms)')
-plt.title('Movement over time')
-plt.legend(loc='best')
-plt.grid(True)
-
-plt.show()
 """
-"""
-____________________
-
-Implement a function, uses windows (the periods of time in which you average the x,y,z for calculating orientation)
-parms: windowSize, overLap (fraction)
-output: windowedData
-After this, then apply the orientation algorithm 
-Basicall y a moving average filter on the windows 
-
-Put the code on github (Nilanjan's github: nilanbumbc)
-1. APPLY THE THRESHOLD VALUE OF 10 TO COMBINE MOVEMENTS
-2. Do the orientation for the no movement
-_________________________________________________
-1. Fill the gaps with the threshold method (done)
-   To find the threshold:
-        Look at the **intramovement** intervals
-        Plot a distribution curve of the intramovement intervals 
-        (List of the distances in the gap)
-2. Combine the accel and gyro MOVEMENT
-    Easiest way to do that is take a union of the two (not addition the U thing) 
-    More like an or
-3. Isolate periods of time when there is movement vs no movement (done)
-    Different orientation algorithm for each
-    No movement:
-        Using the gravity component from the accelerometer (go back to x,y,z component)
-        Measuring orientation on yaw, pitch, and roll
-        Find 3 angles for each sample (trig, tan I think) 
-        See what is necessary to find the overall orientation (ex. averages)
-        Orientation is not very stable
-        Unsupervised ML 
-    Movement:
-_________________________________________________________________________
-
-5 more csvs
-Normalization factors (changing the units to g)
-Two threshold method (Lower [above the noise floor] and upper)
-Combine accelerometer and gyroscope x y z with root mean square
-Fix the threshold for gyroscope     
+Take the whole night of data
+Divide it into 30 second windows (30*25=750 samples)
+Keep an overlap factor like with the other one. For the timebeing have 0 overlap
+For each window:
+    1. Average Pitch
+    2. Average Roll
+    3. Moving vs Not
+        If > 50% moving, then person is moving
+        If < 50% moving, then person is not moving
+Plot a scatter plot of the pitch (x) vs the roll (y)
+Color of dots:
+    1. Moving
+    2. Not moving
 """

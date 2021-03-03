@@ -520,4 +520,5 @@ Plot a scatter plot of the pitch (x) vs the roll (y)
 Color of dots:
     1. Moving
     2. Not moving
+    
 """

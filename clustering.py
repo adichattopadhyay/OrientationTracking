@@ -59,9 +59,9 @@ def nightAvg(windowSize, overlap, data, movement):
     return [avgPitch, avgRoll, movementList]
     
 def orient(acc):
-    accx = acc[0]
-    accy = acc[1]
-    accz = acc[2]
+    accx = np.unwrap(acc[0])
+    accy = np.unwrap(acc[1])
+    accz = np.unwrap(acc[2])
     pitch = []
     roll = []
     orientation = []
@@ -449,6 +449,17 @@ plt.ylabel("Roll")
 plt.grid(True)
 
 plt.show()
+
+"""
+Do phase unwrapping before clustering https://scikit-image.org/docs/dev/auto_examples/filters/plot_phase_unwrap.html
+Overlay overnight data with the cluster
+    Name the clusters 1, 2, 3, 4, ...
+    Each cluster appears at a certain time, at that time, the value of the graph I'm plotting coresponds to a cluster
+    So per window overlay it with the id
+    Show the accRMS
+    Look at the example PNG
+
+"""
 
 """
 plt.subplot(2,1,1)

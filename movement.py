@@ -53,9 +53,9 @@ def expandList(arr):
     return arrExpand
 
 def noMovOrientation(acc, interMovement):
-    accx = acc[0]
-    accy = acc[1]
-    accz = acc[2]
+    accx = np.unwrap(acc[0])
+    accy = np.unwrap(acc[1])
+    accz = np.unwrap(acc[2])
     yaw = []
     pitch = []
     roll = []

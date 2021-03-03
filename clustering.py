@@ -59,9 +59,12 @@ def nightAvg(windowSize, overlap, data, movement):
     return [avgPitch, avgRoll, movementList]
     
 def orient(acc):
-    accx = np.unwrap(acc[0])
-    accy = np.unwrap(acc[1])
-    accz = np.unwrap(acc[2])
+    accx = acc[0]
+    accy = acc[1]
+    accz = acc[2]
+    #accx = np.unwrap(acc[0])
+    #accy = np.unwrap(acc[1])
+    #accz = np.unwrap(acc[2])
     pitch = []
     roll = []
     orientation = []
@@ -408,8 +411,9 @@ for i in range(len(time)):
         cntr+=1
 
 orientation2 = orient([accx2, accy2, accz2])
-#s = int(input("How many seconds do you want the window to be: "))
+#s = int(input("How many seconds do you want the window to be: ")) 
 s = 60
+print(len(movListFinal))
 nightAverage = nightAvg(s*45, 1, orientation2, movListFinal)
 
 print("\n------------------------Night Average------------------------\n")
@@ -437,25 +441,45 @@ nC = int(input("How many clusters?: "))
 kmeans = KMeans(n_clusters=nC).fit(df1)
 centroids = kmeans.cluster_centers_
 print(centroids)
+print(kmeans.labels_)
+print(len(kmeans.labels_))
+print(len(nightAverage[0]))
 
-colors = ['red', 'green']
-fig = plt.figure(figsize=(8,8))
-#plt.scatter(nightAverage[0], nightAverage[1], c=nightAverage[2], cmap=matplotlib.colors.ListedColormap(colors))
-plt.scatter(nightAverage[0], nightAverage[1],  c= kmeans.labels_.astype(float), s=50, alpha=0.5)
-plt.scatter(centroids[:, 0], centroids[:, 1], c='red', s=50)
-plt.title('Pitch vs Roll (' + str(s) + " seconds)")
-plt.xlabel("Pitch")
-plt.ylabel("Roll")
-plt.grid(True)
+graph = int(input("What graph, scatter (1), or overlay(2)?: "))
 
-plt.show()
+if(graph==1):
+    colors = ['red', 'green']
+    fig = plt.figure(figsize=(8,8))
+    #plt.scatter(nightAverage[0], nightAverage[1], c=nightAverage[2], cmap=matplotlib.colors.ListedColormap(colors))
+    plt.scatter(nightAverage[0], nightAverage[1],  c= kmeans.labels_.astype(float), s=50, alpha=0.5)
+    plt.scatter(centroids[:, 0], centroids[:, 1], c='red', s=50)
+    plt.title('Pitch vs Roll (' + str(s) + " seconds)")
+    plt.xlabel("Pitch")
+    plt.ylabel("Roll")
+    plt.grid(True)
+
+    plt.show()
+elif(graph==2):    
+    line1, = plt.plot(time, accRMS, label='accRMS')
+    line2, = plt.plot(time, movListFinal, label='Movement Final')
+    for i in range(0, len(time), s*45):
+        a = int(i/(s*45))
+        plt.text(time[i], 0, kmeans.labels_[a], fontsize=10, color='red')
+    plt.ylabel('Accelerometer RMS (*insert units*)')
+    plt.title('Accelerator RMS overlayed with movement and cluster')
+    plt.xlabel('Time (ms)')
+    plt.legend(loc='best')
+    plt.grid(True)
+
+
+    plt.show()
 
 """
 Do phase unwrapping before clustering https://scikit-image.org/docs/dev/auto_examples/filters/plot_phase_unwrap.html
 Overlay overnight data with the cluster
     Name the clusters 1, 2, 3, 4, ...
     Each cluster appears at a certain time, at that time, the value of the graph I'm plotting coresponds to a cluster
-    So per window overlay it with the id
+    So per window, overlay it with the id
     Show the accRMS
     Look at the example PNG
 

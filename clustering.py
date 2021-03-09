@@ -59,12 +59,12 @@ def nightAvg(windowSize, overlap, data, movement):
     return [avgPitch, avgRoll, movementList]
     
 def orient(acc):
-    accx = acc[0]
-    accy = acc[1]
-    accz = acc[2]
-    #accx = np.unwrap(acc[0])
-    #accy = np.unwrap(acc[1])
-    #accz = np.unwrap(acc[2])
+    #accx = acc[0]
+    #accy = acc[1]
+    #accz = acc[2]
+    accx = list(np.unwrap(np.array(acc[0])*2)/2)
+    accy = list(np.unwrap(np.array(acc[1])*2)/2)
+    accz = list(np.unwrap(np.array(acc[2])*2)/2)
     pitch = []
     roll = []
     orientation = []
@@ -449,7 +449,7 @@ graph = int(input("What graph, scatter (1), or overlay(2)?: "))
 
 if(graph==1):
     colors = ['red', 'green']
-    fig = plt.figure(figsize=(8,8))
+    fig = plt.figure(figsize=(4.5,4.5))
     #plt.scatter(nightAverage[0], nightAverage[1], c=nightAverage[2], cmap=matplotlib.colors.ListedColormap(colors))
     plt.scatter(nightAverage[0], nightAverage[1],  c= kmeans.labels_.astype(float), s=50, alpha=0.5)
     plt.scatter(centroids[:, 0], centroids[:, 1], c='red', s=50)
@@ -457,7 +457,7 @@ if(graph==1):
     plt.xlabel("Pitch")
     plt.ylabel("Roll")
     plt.grid(True)
-
+    plt.tight_layout()
     plt.show()
 elif(graph==2):    
     line1, = plt.plot(time, accRMS, label='accRMS')

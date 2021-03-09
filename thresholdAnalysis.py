@@ -32,8 +32,8 @@ def movement(movementData, moveValue):
             noMoveLen.append(moveCount)
             moveCount = 0
             start = False  
-    print(*noMoveLen) #Need to multiply by 40 to get the actual time
-    print(*indexList)
+    #print(*noMoveLen) #Need to multiply by 40 to get the actual time
+    #print(*indexList)
     return [noMoveLen, indexList]
 
 def butter_highpass(cutoff, fs, order=5):
@@ -90,6 +90,8 @@ gyroMovement = [50 if gyroRMS[i] >= gyroLowerThreshold else np.nan for i in rang
 
 accInterMov = movement(accMovement, 1)
 gyroInterMov = movement(gyroMovement, 50)
+
+print(accInterMov[0][0:10])
 
 kwargs = dict(alpha=0.75, bins=800)
 

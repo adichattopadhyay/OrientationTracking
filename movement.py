@@ -53,9 +53,13 @@ def expandList(arr):
     return arrExpand
 
 def noMovOrientation(acc, interMovement):
-    accx = np.unwrap(acc[0])
-    accy = np.unwrap(acc[1])
-    accz = np.unwrap(acc[2])
+    accx = list(np.unwrap(np.array(acc[0])*2)/2)
+    accy = list(np.unwrap(np.array(acc[1])*2)/2)
+    accz = list(np.unwrap(np.array(acc[2])*2)/2)
+    #accx = acc[0]
+    #accy = acc[1]
+    #accz = acc[2]
+    
     yaw = []
     pitch = []
     roll = []
@@ -370,7 +374,7 @@ print(movListFinal[60:80])
 plt.subplot(2,1,1)
 line1, = plt.plot(time, pitchFinal, label='pitch')
 line2, = plt.plot(time, movListFinal, label='Movement Final')
-plt.ylabel('Pitch (*insert units*)')
+plt.ylabel('Pitch (degrees)')
 plt.title('Pitch')
 plt.xlabel('Time (ms)')
 plt.legend(loc='best')
@@ -379,7 +383,7 @@ plt.grid(True)
 plt.subplot(2,1,2)
 line3, = plt.plot(time, rollFinal, label='roll')
 line4, = plt.plot(time, movListFinal, label='Movement Final')
-plt.ylabel('Roll (*insert units*)')
+plt.ylabel('Roll (degrees)')
 plt.title('Roll')
 plt.xlabel('Time (ms)')
 plt.legend(loc='best')
@@ -391,7 +395,7 @@ plt.subplot(3,1,1)
 plt.tight_layout(h_pad=1)
 line1, = plt.plot(time, accRMS,label='Accelerometer')
 line2, = plt.plot(time, accMovementFinal,label='Movement Final')
-plt.ylabel('Acceleration (*insert units*)')
+plt.ylabel('Acceleration (g)')
 plt.title('Accelerometer data over time')
 plt.xlabel('Time (ms)')
 plt.legend(loc='best')
@@ -400,7 +404,7 @@ plt.grid(True)
 plt.subplot(3,1,2)
 line3, = plt.plot(time, gyroRMS,label='Gyroscope')
 line4, = plt.plot(time, gyroMovementFinal,label='Movement Final')
-plt.ylabel('Gyroscope (*insert units*)')
+plt.ylabel('Gyroscope (dps)')
 plt.xlabel('Time (ms)')
 plt.title('Gyroscope data over time')
 plt.legend(loc='best')

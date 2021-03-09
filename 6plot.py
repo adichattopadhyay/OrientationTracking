@@ -18,7 +18,7 @@ def butter_highpass_filter(data, cutoff, fs, order=5):
     y = signal.filtfilt(b, a, data)
     return y
 
-df = pd.read_csv("imu.csv")
+df = pd.read_csv("Data/imu.csv")
 
 time = df['time'].to_list()
 accx = df['accelerometerX'].to_list()
@@ -36,22 +36,21 @@ gyroy2 = butter_highpass_filter(gyroy, 0.05, 25)
 gyroz2 = butter_highpass_filter(gyroz, 0.05, 25) 
 
 accThreshold = 300
-gyroXthreshold = -7250
-gyroYthreshold = 500
-gyroZthreshold = -1000
+gyrothreshold = 5000
 
 accxMovement = [10000 if accx2[i] >= accThreshold else np.nan for i in range(len(accx2))]
 accyMovement = [10000 if accy2[i] >= accThreshold else np.nan for i in range(len(accy2))]
 acczMovement = [10000 if accz2[i] >= accThreshold else np.nan for i in range(len(accz2))]
-gyroxMovement = [10000 if gyrox2[i] >= gyroXthreshold else np.nan for i in range(len(gyrox))]
-gyroyMovement = [10000 if gyroy2[i] >= gyroYthreshold else np.nan for i in range(len(gyroy))]
-gyrozMovement = [10000 if gyroz2[i] >= gyroZthreshold else np.nan for i in range(len(gyroz))]
+gyroxMovement = [10000 if gyrox2[i] >= gyrothreshold else np.nan for i in range(len(gyrox))]
+gyroyMovement = [10000 if gyroy2[i] >= gyrothreshold else np.nan for i in range(len(gyroy))]
+gyrozMovement = [10000 if gyroz2[i] >= gyrothreshold else np.nan for i in range(len(gyroz))]
 
 plt.subplot(3,2,1)
-plt.tight_layout(h_pad=1)
+#plt.tight_layout()
+
 line1, = plt.plot(time, accx2,label='Accelerometer X')
 line2, = plt.plot(time, accxMovement,label='Movement')
-plt.ylabel('Acceleration (*insert units*)')
+plt.ylabel('Acceleration')
 plt.title('Accelerometer X with movement')
 plt.xlabel('Time (ms)')
 plt.legend(loc='best')
@@ -60,7 +59,7 @@ plt.grid(True)
 plt.subplot(3,2,3)
 line3, = plt.plot(time, accy2,label='Accelerometer Y')
 line4, = plt.plot(time, accyMovement,label='Movement')
-plt.ylabel('Acceleration (*insert units*)')
+plt.ylabel('Acceleration')
 plt.title('Accelerometer Y with movement')
 plt.xlabel('Time (ms)')
 plt.legend(loc='best')
@@ -69,35 +68,35 @@ plt.grid(True)
 plt.subplot(3,2,5)
 line5, = plt.plot(time, accz2,label='Accelerometer Z')
 line6, = plt.plot(time, acczMovement,label='Movement')
-plt.ylabel('Acceleration (*insert units*)')
+plt.ylabel('Acceleration')
 plt.title('Accelerometer Z with movement')
 plt.xlabel('Time (ms)')
 plt.legend(loc='best')
 plt.grid(True)
 
 plt.subplot(3,2,2)
-line7, = plt.plot(time, gyrox2,label='Gyrometer X')
+line7, = plt.plot(time, gyrox2,label='Gyroscope X')
 line8, = plt.plot(time, gyroxMovement,label='Movement')
-plt.ylabel('Rotation (*insert units*)')
-plt.title('Gyrometer X with movement')
+plt.ylabel('Rotation')
+plt.title('Gyroscope X with movement')
 plt.xlabel('Time (ms)')
 plt.legend(loc='best')
 plt.grid(True)
 
 plt.subplot(3,2,4)
-line9, = plt.plot(time, gyroy2,label='Gyrometer Y')
+line9, = plt.plot(time, gyroy2,label='Gyroscope Y')
 line10, = plt.plot(time, gyroyMovement,label='Movement')
-plt.ylabel('Rotation (*insert units*)')
-plt.title('Gyrometer Y with movement')
+plt.ylabel('Rotation')
+plt.title('Gyroscope Y with movement')
 plt.xlabel('Time (ms)')
 plt.legend(loc='best')
 plt.grid(True)
 
 plt.subplot(3,2,6)
-line11, = plt.plot(time, gyroz2,label='Gyrometer Z')
+line11, = plt.plot(time, gyroz2,label='Gyroscope Z')
 line12, = plt.plot(time, gyrozMovement,label='Movement')
-plt.ylabel('Rotation (*insert units*)')
-plt.title('Gyrometer Z with movement')
+plt.ylabel('Rotation')
+plt.title('Gyroscope Z with movement')
 plt.xlabel('Time (ms)')
 plt.legend(loc='best')
 plt.grid(True)

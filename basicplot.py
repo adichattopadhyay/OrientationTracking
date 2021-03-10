@@ -3,6 +3,7 @@ import numpy
 import matplotlib.pyplot as plt
 from scipy import signal
 from scipy import pi
+import os
 
 def butter_highpass(cutoff, fs, order=5):
     nyq = 0.5 * fs
@@ -15,8 +16,10 @@ def butter_highpass_filter(data, cutoff, fs, order=5):
     y = signal.filtfilt(b, a, data)
     return y
 
-df = pd.read_csv("Data/imu.csv")
- 
+fileName = input("Which file do you want?: ")
+
+df = pd.read_csv(os.getcwd()+"/Data/"+fileName+".csv")
+
 time = df['time'].to_list()
 accx = df['accelerometerX'].to_list()
 accy = df['accelerometerZ'].to_list()
@@ -25,6 +28,7 @@ gyrox = df['gyroscopeX'].to_list()
 gyroy = df['gyroscopeY'].to_list()
 gyroz = df['gyroscopeZ'].to_list()
 
+#Centers the data at 0
 accx2 = butter_highpass_filter(accx, 0.2, 25)
 accy2 = butter_highpass_filter(accy, 0.2, 25)
 accz2 = butter_highpass_filter(accz, 0.2, 25) 

@@ -106,15 +106,3 @@ plt.legend(loc='best')
 plt.grid(True)
 
 plt.show()
-
-"""
-Read the data one sample at a time
-Define a threshold for movement
-Once you reach the threshold, movement has started
-Once the data falls below the threshold, movement has stopped
-Store the movement 
-(Should work for both acc and gyro data)
-
-Then plot on top of the acc (flitered) and gyro (not filtered) x, y, z (6 subplots) data the offset and onset of the movement
-    Sensor data overlayed with motion
-"""

@@ -86,22 +86,3 @@ plt.legend(loc='best')
 plt.grid(True)
 
 plt.show()
-
-"""
-
-1. Fill the gaps with the threshold method
-   To find the threshold:
-        Look at the intramovement intervals
-        Plot a distribution curve of the intramovement intervals 
-        (List of the distances in the gap)
-2. Combine the accel and gyro data
-    Easiest way to do that is take a union of the two (not addition the U thing)
-3. Isolate periods of time when there is movement vs no movement
-_________________________________________________________________________
-
-5 more csvs
-Normalization factors (changing the units to g)
-Two threshold method (Lower [above the noise floor] and upper)
-Combine accelerometer and gyroscope x y z with root mean square
-Fix the threshold for gyroscope     
-"""

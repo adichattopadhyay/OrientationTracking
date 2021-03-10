@@ -11,6 +11,14 @@ from scipy.signal import butter, lfilter, freqz
 import os
 
 def divideChunk(chunkSize, overlap, data):
+    """
+    chunkSize: The size of each chunk that the data is going to divided into
+    overlap: Fraction. How much overlap is in each chunk, if say you want 90% overlap, you want to input 1/10 due to how overlap is implemented. 
+    data: The data that will be divided
+    
+    This function takes data, divides that data into chunks of size chunkSize with an overlap of overlap 
+    Returns: A list that contains the start and end index of every chunk.
+    """
     nextSample = round(chunkSize*overlap)
     indexList = []
     for i in range(0, len(data), nextSample):
@@ -18,34 +26,37 @@ def divideChunk(chunkSize, overlap, data):
             indexList.append([i, len(data)-1])
         else:
             indexList.append([i,i+chunkSize-1])
-    print("\nFirst 10 for index list:", indexList[0:10])
     return indexList
-        
 
 def windowAvg(windowSize, overlap, data):
+    """
+    windowSize: The size of each window that the data is going to divided into
+    overlap: Fraction. How much overlap is in each window, if say you want 90% overlap, you want to input 1/10 due to how overlap is implemented. 
+    data: The data that will be divided and used to calculate the moving average with
+    
+    This function takes any list of data points and calculates the moving average with a window size windowSize and overlap overLap.
+    Returns: The result of the moving average filter.
+    """
     count = 0
     indexList = divideChunk(windowSize, overlap, data)
     avgData = []
-    print("data len", len(data))
-    print("index len", len(indexList))
     for i in range(len(data)):
-        try:
-            if(indexList[count][0]==i):
-                avg = sum(data[indexList[count][0]:indexList[count][1]])/windowSize  
-                avgData.append(avg)
-                if(count!=len(indexList)-1):
-                    count+=1
-            else:
-                avgData.append(avgData[i-1])
-        except:
-            print("count", count)
-            print("i", i)
-            print("len avgData", len(avgData))
-            print("Last 10 for index list: ", indexList[-10:])
-            exit()
+        if(indexList[count][0]==i):
+            avg = sum(data[indexList[count][0]:indexList[count][1]])/windowSize  
+            avgData.append(avg)
+            if(count!=len(indexList)-1):
+                count+=1
+        else:
+            avgData.append(avgData[i-1])
     return avgData
 
 def expandList(arr):
+    """
+    arr: A double array, e.x. [[1,2][3,4]]
+    
+    This function takes a double array and makes it into a singlular array
+    Returns: A singular array. 
+    """
     arrExpand = []
     for i in range(len(arr)):
         for j in arr[i]:
@@ -53,19 +64,20 @@ def expandList(arr):
     return arrExpand
 
 def noMovOrientation(acc, interMovement):
-    accx = list(np.unwrap(np.array(acc[0])*2)/2)
-    accy = list(np.unwrap(np.array(acc[1])*2)/2)
-    accz = list(np.unwrap(np.array(acc[2])*2)/2)
-    #accx = acc[0]
-    #accy = acc[1]
-    #accz = acc[2]
+    """
+    acc: Accelerometer data
+    interMovement: Double array containing the start and end indexes of the intermovement intervals
     
+    This function goes through the intermovement periods and calculates the roll and pitch for each data point. 
+    For each specific array that contains a start and end index, it calculates and overall pitch and overall orientation. 
+    Returns: A list of the individual yaw, pitch, and roll, individal orientation, the orientation averages, and a list of the times of each of these points.
+    """
+    accx = acc[0]
+    accy = acc[1]
+    accz = acc[2]
     yaw = []
     pitch = []
     roll = []
-    yawExpand = []
-    pitchExpand = []
-    rollExpand = []
     orientation = []
     orientationAvg = []
     time2 = []
@@ -82,21 +94,23 @@ def noMovOrientation(acc, interMovement):
             pitchVal = math.atan2(accx[j], math.sqrt(accy[j]**2+accz[j]**2)) * 180/math.pi
             roll[i].append(rollVal)
             pitch[i].append(pitchVal)
-            #rollExpand.append(rollVal)
-            #pitchExpand.append(pitchVal)
-            #yaw[i].append()
-            #Roll = atan2(Y, Z) * 180/PI;
-            #Pitch = atan2(X, sqrt(Y*Y + Z*Z)) * 180/PI;
             #From https://samselectronicsprojects.blogspot.com/2014/07/getting-roll-pitch-and-yaw-from-mpu-6050.html 
     for i in range(len(roll)):
         for j in range(len(roll[i])):
-            #orientation[i].append((roll[i][j]+pitch[i][j]+yaw[i][j])/3) For when yaw is implemented
             orientation[i].append((roll[i][j]+pitch[i][j])/2)
     for i in range(len(orientation)):
         orientationAvg.append(sum(orientation[i])/len(orientation[i]))
     return [[yaw, pitch, roll], orientation, orientationAvg, time2]
 
 def finalMovement(movement, threshold, moveValue):
+    """
+    movement: Movement data
+    threshold: The maximum gap length for the gap to be considered movement
+    movValue: The value used to designate movement in the list movement
+    
+    This function goes through the movementList and fills up all the gaps that are <= threshold.
+    Returns: A list with gaps filled in the movement
+    """
     started = False
     count = 0
     finalMovement = []
@@ -111,9 +125,6 @@ def finalMovement(movement, threshold, moveValue):
                 for j in range(count+1):
                     finalMovement.append(np.nan)
                 count = 0
-                #print("I'm in the third elif")
-                #print(len(finalMovement))
-                #print(i)
                 started=False
             else:
                 count+=1
@@ -122,17 +133,17 @@ def finalMovement(movement, threshold, moveValue):
                 finalMovement.append(moveValue)
             count = 0
             started = False
-            #print("I'm in the fourth elif---------------------")
-            #print(len(finalMovement))
-            #print(i)
-    #print("All done")
-    #print(len(finalMovement))
-    #print(len(movement))
     return finalMovement
 
 def combineMovement(accMov, gyroMov, moveValue):
-    #print(len(accMov))
-    #print(len(gyroMov))
+    """
+    accMov: The movement calculated with the accelerometer
+    gyroMov: The movement calculated with the gyroscrope
+    movValue: The value used to designate movement in the lists accMov and gyroMov
+    
+    This function goes through both the accelerometer movement and gyroscope movement and combines the two.
+    Returns: A list with the combined accelerometer and gyroscope movement.  
+    """
     movList = []
     for i in range(len(accMov)):
         if(accMov[i] == moveValue or gyroMov[i] == moveValue):
@@ -148,8 +159,9 @@ def movement(movementData, moveValue):
     """
     movementData: List of when there is movement, binary list, either has np.nan or moveValue for a value
     moveValue: int, whatever value is set to denote motion
+    
     This function goes through movementData and tracks how long the movement is and what index it starts at
-    Returns a list [noMoveLen, indexList]
+    Returns: a list [noMoveLen, indexList]
     """
     moveLen = []
     indexList = []
@@ -177,8 +189,9 @@ def noMovement(movementData, moveValue):
     """
     movementData: List of when there is movement, binary list, either has np.nan or moveValue for a value
     moveValue: int, whatever value is set to denote motion
+    
     This function goes through movementData and tracks how long the gap between the movements is and what index it starts at
-    Returns a list [noMoveLen, indexList]
+    Returns: A list [noMoveLen, indexList]
     """
     noMoveLen = []
     indexList = []
@@ -216,6 +229,12 @@ def butter_highpass_filter(data, cutoff, fs, order=5):
     return y
 
 def rms3(lists):
+    """
+    lists: List of 3 lists all of the same length
+    
+    This function goes through the lists and for each point calculates the Root Mean Squared
+    Returns: A list of the values root mean squared. 
+    """
     rms = []
     for i in range(len(lists[0])):
         rms.append(math.sqrt((1/3)*((lists[0][i]**2)+(lists[1][i]**2)+(lists[2][i]**2))))
@@ -226,6 +245,8 @@ fileName = input("Which file do you want?: ")
 df = pd.read_csv(os.getcwd()+"/Data/"+fileName+".csv")
 
 time = df['time'].to_list()
+
+#Normalization factors
 accx = [x / 4096 for x in df['accelerometerX'].to_list()]
 accy = [x / 4096 for x in df['accelerometerY'].to_list()]
 accz = [x / 4096 for x in df['accelerometerZ'].to_list()]
@@ -233,25 +254,21 @@ gyrox = [x / 131 for x in df['gyroscopeX'].to_list()]
 gyroy = [x / 131 for x in df['gyroscopeY'].to_list()]
 gyroz = [x / 131 for x in df['gyroscopeZ'].to_list()]
 
+#Centers the data at 0
 accx2 = butter_highpass_filter(accx, 0.2, 25)
 accy2 = butter_highpass_filter(accy, 0.2, 25)
 accz2 = butter_highpass_filter(accz, 0.2, 25) 
-
-accRMS = rms3([accx2, accy2, accz2])
-
 gyrox2 = butter_highpass_filter(gyrox, 0.05, 25)
 gyroy2 = butter_highpass_filter(gyroy, 0.05, 25)
 gyroz2 = butter_highpass_filter(gyroz, 0.05, 25) 
 
+#Calculates the RMS of the data
+accRMS = rms3([accx2, accy2, accz2])
 gyroRMS = rms3([gyrox2, gyroy2, gyroz2])
 
+#Thresholds of the data
 accLowerThreshold = 0.1
-accUpperThreshold = 8000
 gyroLowerThreshold = 10
-gyroUpperThreshold = 8000
-
-#accMovement = [10000 if accRMS[i] >= accLowerThreshold and accRMS[i] <= accUpperThreshold else np.nan for i in range(len(accRMS))]
-#gyroMovement = [10000 if gyroRMS[i] >= gyroLowerThreshold and gyroRMS[i] <= gyroUpperThreshold else np.nan for i in range(len(gyroRMS))]
 
 #Movement 
 accMovement = [1 if accRMS[i] >= accLowerThreshold else np.nan for i in range(len(accRMS))]
@@ -329,32 +346,20 @@ print("\n------------------------Time------------------------\n")
 print("Time:")
 print(interMovTime[0:20])
 print(interMovTime[72:92])
+         
 
-#Graph the roll and pitch intermovement interval
-#If they look consistent then there is no preprocessing step needed
-#Across the five nights
-#Forget about yaw for now
-
-#print(len(pitch))
-#print(pitch[1540:1570])            
-
-#Expands the roll, pitch, and yaw lists
-#yawExpand = expandList(yaw)
-
-
+#Expands the roll and pitch lists and takes the moving average of them
 pitchExpand = expandList(pitch)
 rollExpand = expandList(roll)
 pitchAvg = windowAvg(100, 9/10, pitchExpand)
 rollAvg = windowAvg(100, 9/10, rollExpand)
+
 pitchFinal = []
 rollFinal = []
 cntr = 0
-
-print(len(time))
-print(len(interMovTime))
-
 wait=False
 
+#Inserts a NaN at every place that isn't movement 
 for i in range(len(time)):
     if(i>len(interMovTime)-1):
         pitchFinal.append(np.nan)
@@ -366,97 +371,56 @@ for i in range(len(time)):
         pitchFinal.append(np.nan)
         rollFinal.append(np.nan)
         cntr+=1
+        
+graph = int(input("What graph, orientation (1), or movement(2)?: "))
 
-print(len(pitchFinal))
+if(graph==1):
+    plt.subplot(2,1,1)
+    line1, = plt.plot(time, pitchFinal, label='pitch')
+    line2, = plt.plot(time, movListFinal, label='Movement Final')
+    plt.ylabel('Pitch (degrees)')
+    plt.title('Pitch')
+    plt.xlabel('Time (ms)')
+    plt.legend(loc='best')
+    plt.grid(True)
 
-print(movListFinal[60:80])
+    plt.subplot(2,1,2)
+    line3, = plt.plot(time, rollFinal, label='roll')
+    line4, = plt.plot(time, movListFinal, label='Movement Final')
+    plt.ylabel('Roll (degrees)')
+    plt.title('Roll')
+    plt.xlabel('Time (ms)')
+    plt.legend(loc='best')
+    plt.grid(True)
 
-plt.subplot(2,1,1)
-line1, = plt.plot(time, pitchFinal, label='pitch')
-line2, = plt.plot(time, movListFinal, label='Movement Final')
-plt.ylabel('Pitch (degrees)')
-plt.title('Pitch')
-plt.xlabel('Time (ms)')
-plt.legend(loc='best')
-plt.grid(True)
+    plt.show()
+elif(graph==2):
+    plt.subplot(3,1,1)
+    plt.tight_layout(h_pad=1)
+    line1, = plt.plot(time, accRMS,label='Accelerometer')
+    line2, = plt.plot(time, accMovementFinal,label='Movement Final')
+    plt.ylabel('Acceleration (g)')
+    plt.title('Accelerometer data over time')
+    plt.xlabel('Time (ms)')
+    plt.legend(loc='best')
+    plt.grid(True)
 
-plt.subplot(2,1,2)
-line3, = plt.plot(time, rollFinal, label='roll')
-line4, = plt.plot(time, movListFinal, label='Movement Final')
-plt.ylabel('Roll (degrees)')
-plt.title('Roll')
-plt.xlabel('Time (ms)')
-plt.legend(loc='best')
-plt.grid(True)
+    plt.subplot(3,1,2)
+    line3, = plt.plot(time, gyroRMS,label='Gyroscope')
+    line4, = plt.plot(time, gyroMovementFinal,label='Movement Final')
+    plt.ylabel('Gyroscope (dps)')
+    plt.xlabel('Time (ms)')
+    plt.title('Gyroscope data over time')
+    plt.legend(loc='best')
+    plt.grid(True)
 
-plt.show()
-"""
-plt.subplot(3,1,1)
-plt.tight_layout(h_pad=1)
-line1, = plt.plot(time, accRMS,label='Accelerometer')
-line2, = plt.plot(time, accMovementFinal,label='Movement Final')
-plt.ylabel('Acceleration (g)')
-plt.title('Accelerometer data over time')
-plt.xlabel('Time (ms)')
-plt.legend(loc='best')
-plt.grid(True)
+    plt.subplot(3,1,3)
+    line5, = plt.plot(time, movListFinal, label='Movement Final')
+    line6, = plt.plot(time, movList, label = 'Movement (not Final)')
+    plt.ylabel('Movement')
+    plt.xlabel('Time (ms)')
+    plt.title('Movement over time')
+    plt.legend(loc='best')
+    plt.grid(True)
 
-plt.subplot(3,1,2)
-line3, = plt.plot(time, gyroRMS,label='Gyroscope')
-line4, = plt.plot(time, gyroMovementFinal,label='Movement Final')
-plt.ylabel('Gyroscope (dps)')
-plt.xlabel('Time (ms)')
-plt.title('Gyroscope data over time')
-plt.legend(loc='best')
-plt.grid(True)
-
-plt.subplot(3,1,3)
-line5, = plt.plot(time, movListFinal, label='Movement Final')
-line6, = plt.plot(time, movList, label = 'Movement (not Final)')
-plt.ylabel('Movement')
-plt.xlabel('Time (ms)')
-plt.title('Movement over time')
-plt.legend(loc='best')
-plt.grid(True)
-
-plt.show()
-"""
-"""
-____________________
-
-Implement a function, uses windows (the periods of time in which you average the x,y,z for calculating orientation)
-parms: windowSize, overLap (fraction)
-output: windowedData
-After this, then apply the orientation algorithm 
-Basicall y a moving average filter on the windows 
-
-Put the code on github (Nilanjan's github: nilanbumbc)
-1. APPLY THE THRESHOLD VALUE OF 10 TO COMBINE MOVEMENTS
-2. Do the orientation for the no movement
-_________________________________________________
-1. Fill the gaps with the threshold method (done)
-   To find the threshold:
-        Look at the **intramovement** intervals
-        Plot a distribution curve of the intramovement intervals 
-        (List of the distances in the gap)
-2. Combine the accel and gyro MOVEMENT
-    Easiest way to do that is take a union of the two (not addition the U thing) 
-    More like an or
-3. Isolate periods of time when there is movement vs no movement (done)
-    Different orientation algorithm for each
-    No movement:
-        Using the gravity component from the accelerometer (go back to x,y,z component)
-        Measuring orientation on yaw, pitch, and roll
-        Find 3 angles for each sample (trig, tan I think) 
-        See what is necessary to find the overall orientation (ex. averages)
-        Orientation is not very stable
-        Unsupervised ML 
-    Movement:
-_________________________________________________________________________
-
-5 more csvs
-Normalization factors (changing the units to g)
-Two threshold method (Lower [above the noise floor] and upper)
-Combine accelerometer and gyroscope x y z with root mean square
-Fix the threshold for gyroscope     
-"""
+    plt.show()
